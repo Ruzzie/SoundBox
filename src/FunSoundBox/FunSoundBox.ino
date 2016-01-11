@@ -28,8 +28,10 @@
 Adafruit_VS1053_FilePlayer musicPlayer =
         Adafruit_VS1053_FilePlayer(BREAKOUT_RESET, BREAKOUT_CS, BREAKOUT_DCS, DREQ, CARDCS);
 
+#define RANDOM_FILE_ARRAY_SIZE 64
+
+String filesToPlay[RANDOM_FILE_ARRAY_SIZE];//only the first RANDOM_FILE_ARRAY_SIZE are played
 int fileCount =0;
-String filesToPlay[64];
 int volumeInputValue = 1024;
 
 void setup() {
@@ -73,19 +75,23 @@ void setup() {
     File root = SD.open("/");
     printlnToSerial("Files: ");
     while (true) {
+
+        if(fileCount > RANDOM_FILE_ARRAY_SIZE){
+            break;
+        }
+
         File entry = root.openNextFile();
         if (!entry) {
             break;
         }
+
         if (!entry.isDirectory()) {
-            char* fileName = entry.name();
+            char *fileName = entry.name();
             printlnToSerial(fileName);
             filesToPlay[fileCount] = fileName;
             fileCount++;
         }
-        if (entry) {
-            entry.close();
-        }
+        entry.close();
     }
 
     root.close();
@@ -123,21 +129,25 @@ void printlnToSerial(const __FlashStringHelper *ifsh){
         Serial.println(ifsh);
     }
 }
+
 const float volumeFactor = 255/1024;
 
-void loop() {
-
+void loop() {  
+    /*Tweak delays to fine-tune interaction*/
+        
     int currentVolumeInputValue = analogRead(VOLUME_INPUT);
     if (abs(currentVolumeInputValue - volumeInputValue) > VOLUME_TOLERANCE) {
         digitalWrite(STATUS_LED, LOW);
         volumeInputValue = currentVolumeInputValue;
         uint8_t volume = volumeFactor * volumeInputValue;
         musicPlayer.setVolume(volume, volume);
-        printlnToSerial("Volume: " + String(volumeInputValue));
+        printlnToSerial("Volume raw: " + String(volumeInputValue));
         digitalWrite(STATUS_LED, HIGH);
         delay(20);
     }
 
+    //  When button is pressed and still pressed after the delay skip to next random file
+    //    when you keep the button pressed it will skip automatically
     while (digitalRead(BUTTON_ONE) == HIGH) {
         delay(40);
         if (digitalRead(BUTTON_ONE) == HIGH) {
@@ -145,10 +155,13 @@ void loop() {
             if (musicPlayer.playingMusic) {
                 musicPlayer.stopPlaying();
             }
-            if (!musicPlayer.startPlayingFile(filesToPlay[random(fileCount)].c_str())) {
+            const char* nextFileName = filesToPlay[random(fileCount)].c_str();
+            if (!musicPlayer.startPlayingFile(nextFileName)) {
+                printlnToSerial("Error: could not play file: " + String(nextFileName));
                 Blink(STATUS_LED, 2, 50, 100);
+            } else {
+                digitalWrite(STATUS_LED, HIGH);
             }
-            digitalWrite(STATUS_LED, HIGH);
             delay(10);
         }
     }
