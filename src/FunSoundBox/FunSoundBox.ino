@@ -2,6 +2,8 @@
 #include <SPI.h>
 #include <SD.h>
 #include "Adafruit_VS1053.h"
+#include "Playlist.h"
+
 
 // define the pins used
 //#define CLK 13       // SPI Clock, shared with SD card
@@ -9,10 +11,9 @@
 //#define MOSI 11      // Output data, to VS1053/SD card
 // Connect CLK, MISO and MOSI to hardware SPI pins. 
 // See http://arduino.cc/en/Reference/SPI "Connections"
-
 // These are common pins between breakout and shield
-#define DREQ             2      // VS1053 Data request, ideally an Interrupt pin
-#define CARDCS           6     // Card chip select pin
+#define DREQ             3      // VS1053 Data request, ideally an Interrupt pin
+#define CARDCS           4     // Card chip select pin
 
 #define BREAKOUT_DCS     8      // VS1053 Data/command select pin (output)
 #define BREAKOUT_RESET   9      // VS1053 reset pin (output)
@@ -20,24 +21,23 @@
 
 
 #define STATUS_LED       5
-#define BUTTON_ONE       3       
-//#define BUTTON_TWO       
+#define BUTTON_ONE       6       //start / next normal playlist
+#define BUTTON_TWO       7       // start / next raunchy playlist
 #define VOLUME_INPUT     A0
 #define VOLUME_TOLERANCE 31
+
 
 Adafruit_VS1053_FilePlayer musicPlayer =
         Adafruit_VS1053_FilePlayer(BREAKOUT_RESET, BREAKOUT_CS, BREAKOUT_DCS, DREQ, CARDCS);
 
-#define RANDOM_FILE_ARRAY_SIZE 64
+Playlist defaultPlaylist;
 
-String filesToPlay[RANDOM_FILE_ARRAY_SIZE];//only the first RANDOM_FILE_ARRAY_SIZE are played
-int fileCount =0;
 int volumeInputValue = 1024;
 
 void setup() {
     pinMode(STATUS_LED, OUTPUT);
     pinMode(BUTTON_ONE, INPUT);
-//    pinMode(BUTTON_TWO, INPUT);
+    pinMode(BUTTON_TWO, INPUT);
 
     digitalWrite(STATUS_LED, LOW);
 
@@ -46,9 +46,9 @@ void setup() {
 
     while (!musicPlayer.begin()) { // initialise the music player
         printlnToSerial(F("Couldn't find VS1053, do you have the right pins defined?"));
-        Blink(STATUS_LED, 3, 500, 500);      
+        Blink(STATUS_LED, 3, 500, 500);
     }
-    
+
     printlnToSerial(F("VS1053 found"));
 
     musicPlayer.setVolume(0, 255);
@@ -58,46 +58,27 @@ void setup() {
         Blink(STATUS_LED, 2, 200, 200);
     }
 
-    //Play success initialization bleeps
-    musicPlayer.sineTest(193, 500);
-    
+    //Play success initialization tone
+    musicPlayer.sineTest(27, 750);
+
     // initialise the SD card
     while (!SD.begin(CARDCS)) {
         printlnToSerial(F("Couldn't initialise SD card"));
         //If the sd card could not be initialised beep twice and blink
-        musicPlayer.sineTest(0x44, 500);
-        musicPlayer.sineTest(0x44, 500);
+        musicPlayer.sineTest(0x44, 750);
         Blink(STATUS_LED, 5, 200, 400);
     }
 
+    Ruzzie::SimpleRandom simpleRandom = Ruzzie::SimpleRandom(analogRead(VOLUME_INPUT));
+
+    defaultPlaylist.Initialize("/", simpleRandom, true);
+
     digitalWrite(STATUS_LED, HIGH);
 
-    File root = SD.open("/");
-    printlnToSerial("Files: ");
-    while (true) {
-
-        if(fileCount > RANDOM_FILE_ARRAY_SIZE){
-            break;
-        }
-
-        File entry = root.openNextFile();
-        if (!entry) {
-            break;
-        }
-
-        if (!entry.isDirectory()) {
-            char *fileName = entry.name();
-            printlnToSerial(fileName);
-            filesToPlay[fileCount] = fileName;
-            fileCount++;
-        }
-        entry.close();
-    }
-
-    root.close();
-
-    if (SD.exists("init.wav")) {
-        musicPlayer.playFullFile("init.wav");
+    if (SD.exists("INIT.MP3")) {
+        printlnToSerial("INIT.MP3 found start playing.");
+        musicPlayer.playFullFile("INIT.MP3");
+        printlnToSerial("INIT.MP3 done playing.");
     }
 
     randomSeed(analogRead(VOLUME_INPUT));
@@ -112,29 +93,29 @@ void Blink(const uint8_t port, const uint8_t times, const unsigned long interval
     }
 }
 
-void printlnToSerial(const char * text){
-    if(Serial){
+void printlnToSerial(const char *text) {
+    if (Serial) {
         Serial.println(text);
     }
 }
 
-void printlnToSerial(const String &text){
-    if(Serial){
+void printlnToSerial(const String &text) {
+    if (Serial) {
         Serial.println(text);
     }
 }
 
-void printlnToSerial(const __FlashStringHelper *ifsh){
-    if(Serial){
+void printlnToSerial(const __FlashStringHelper *ifsh) {
+    if (Serial) {
         Serial.println(ifsh);
     }
 }
 
-const float volumeFactor = 255/1024;
+const float volumeFactor = 255 / 1024;
 
-void loop() {  
+void loop() {
     /*Tweak delays to fine-tune interaction*/
-        
+
     int currentVolumeInputValue = analogRead(VOLUME_INPUT);
     if (abs(currentVolumeInputValue - volumeInputValue) > VOLUME_TOLERANCE) {
         digitalWrite(STATUS_LED, LOW);
@@ -146,24 +127,31 @@ void loop() {
         delay(20);
     }
 
+    ButtonPollOrAction(BUTTON_ONE, STATUS_LED);
+
+    delay(1);
+}
+
+void ButtonPollOrAction(const uint8_t buttonPin, const uint8_t statusLedPin) {
     //  When button is pressed and still pressed after the delay skip to next random file
     //    when you keep the button pressed it will skip automatically
-    while (digitalRead(BUTTON_ONE) == HIGH) {
+    /* Tweak delays to fine-tune interaction */
+    while (digitalRead(buttonPin) == HIGH) {
         delay(40);
-        if (digitalRead(BUTTON_ONE) == HIGH) {
-            digitalWrite(STATUS_LED, LOW);
+        if (digitalRead(buttonPin) == HIGH) {
+            digitalWrite(statusLedPin, LOW);
             if (musicPlayer.playingMusic) {
                 musicPlayer.stopPlaying();
             }
-            const char* nextFileName = filesToPlay[random(fileCount)].c_str();
+
+            const char *nextFileName = defaultPlaylist.NextRandomFilename();
             if (!musicPlayer.startPlayingFile(nextFileName)) {
                 printlnToSerial("Error: could not play file: " + String(nextFileName));
-                Blink(STATUS_LED, 2, 50, 100);
+                Blink(statusLedPin, 2, 50, 100);
             } else {
-                digitalWrite(STATUS_LED, HIGH);
+                digitalWrite(statusLedPin, HIGH);
             }
             delay(10);
         }
     }
-    delay(1);
 }
