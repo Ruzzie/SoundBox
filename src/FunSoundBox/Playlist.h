@@ -4,7 +4,6 @@
 
 #ifndef FUNSOUNDBOX_PLAYLIST_H
 #define FUNSOUNDBOX_PLAYLIST_H
-#define PLAYLIST_MAX_SIZE 40
 #include <SD.h>
 #include <Arduino.h>
 #include "SimpleRandom.h"
@@ -17,17 +16,13 @@ public:
 
     void Initialize(const char *rootPath, const Ruzzie::SimpleRandom simpleRandom, bool debug = true);
 
-    int GetFileCount();
-
-    const char *NextRandomFilename();
-
-    void PrintFilenames(Stream &stream);
+    String NextRandomFilename();
 
 private:
     int fileCount;
-    String fileNames[PLAYLIST_MAX_SIZE];
     Ruzzie::SimpleRandom simpleRandom;
     bool debug;
+    File root;
 };
 
 

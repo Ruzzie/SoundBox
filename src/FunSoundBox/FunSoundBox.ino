@@ -59,7 +59,7 @@ void setup() {
     }
 
     //Play success initialization tone
-    musicPlayer.sineTest(27, 750);
+    musicPlayer.sineTest(50, 750);
 
     // initialise the SD card
     while (!SD.begin(CARDCS)) {
@@ -73,7 +73,6 @@ void setup() {
     printlnToSerial("Randomizer created: first random: "+String(simpleRandom.Next()));
 
     defaultPlaylist.Initialize("/", simpleRandom, true);
-    defaultPlaylist.PrintFilenames(Serial);
 
     digitalWrite(STATUS_LED, HIGH);
 
@@ -111,7 +110,7 @@ void printlnToSerial(const __FlashStringHelper *ifsh) {
     }
 }
 
-const float volumeFactor = 255 / 1024;
+const float volumeFactor = 4;
 
 void loop() {
     /*Tweak delays to fine-tune interaction*/
@@ -120,16 +119,21 @@ void loop() {
     if (abs(currentVolumeInputValue - volumeInputValue) > VOLUME_TOLERANCE) {
         digitalWrite(STATUS_LED, LOW);
         volumeInputValue = currentVolumeInputValue;
-        uint8_t volume = volumeFactor * volumeInputValue;
+        int volume = 0;
+        if(volumeInputValue > 0){
+         volume = 256 - (volumeInputValue / volumeFactor);
+        }
         musicPlayer.setVolume(volume, volume);
         printlnToSerial("Volume raw: " + String(volumeInputValue));
+        printlnToSerial("Volume calculated: " + String(volume));
         digitalWrite(STATUS_LED, HIGH);
         delay(20);
     }
 
     ButtonPollOrAction(BUTTON_ONE, STATUS_LED);
+    ButtonPollOrAction(BUTTON_TWO, STATUS_LED);
 
-    delay(10);
+    delay(5);
 }
 
 void ButtonPollOrAction(const uint8_t buttonPin, const uint8_t statusLedPin) {
@@ -144,14 +148,18 @@ void ButtonPollOrAction(const uint8_t buttonPin, const uint8_t statusLedPin) {
                 musicPlayer.stopPlaying();
             }
 
-            const char *nextFileName = defaultPlaylist.NextRandomFilename();
-            if (!musicPlayer.startPlayingFile(nextFileName)) {
+            String nextFileName = defaultPlaylist.NextRandomFilename();
+//            Serial.println("|");
+//            Serial.println(nextFileName.c_str());
+//            Serial.println("|");
+
+            if (!musicPlayer.startPlayingFile(nextFileName.c_str())) {
                 printlnToSerial("Error: could not play file: " + String(nextFileName));
                 Blink(statusLedPin, 2, 50, 100);
             } else {
                 digitalWrite(statusLedPin, HIGH);
             }
-            delay(10);
+            delay(20);
         }
     }
 }
