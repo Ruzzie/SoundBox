@@ -4,7 +4,7 @@
 
 #ifndef FUNSOUNDBOX_PLAYLIST_H
 #define FUNSOUNDBOX_PLAYLIST_H
-#define PLAYLIST_MAX_SIZE 48
+#define PLAYLIST_MAX_SIZE 40
 #include <SD.h>
 #include <Arduino.h>
 #include "SimpleRandom.h"

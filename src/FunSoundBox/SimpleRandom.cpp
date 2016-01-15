@@ -24,10 +24,6 @@ namespace Ruzzie {
         return retVal;
     }
 
-    uint8_t SimpleRandom::NextByte() {
-        return (uint8_t) (Next() & RUZZIE_MAX_VALUE_BYTE);
-    }
-
     int SimpleRandom::Next() {
         return Next(RUZZIE_MAX_VALUE_INT32);
     }

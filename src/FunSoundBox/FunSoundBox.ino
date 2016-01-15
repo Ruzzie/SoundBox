@@ -45,16 +45,16 @@ void setup() {
     printlnToSerial("Initializing");
 
     while (!musicPlayer.begin()) { // initialise the music player
-        printlnToSerial(F("Couldn't find VS1053, do you have the right pins defined?"));
+        printlnToSerial("Couldn't find VS1053, do you have the right pins defined?");
         Blink(STATUS_LED, 3, 500, 500);
     }
 
-    printlnToSerial(F("VS1053 found"));
+    printlnToSerial("VS1053 found");
 
     musicPlayer.setVolume(0, 255);
 
     while (!musicPlayer.useInterrupt(VS1053_FILEPLAYER_PIN_INT)) {
-        printlnToSerial(F("DREQ is not on an interrupt pin"));
+        printlnToSerial("DREQ is not on an interrupt pin");
         Blink(STATUS_LED, 2, 200, 200);
     }
 
@@ -63,7 +63,7 @@ void setup() {
 
     // initialise the SD card
     while (!SD.begin(CARDCS)) {
-        printlnToSerial(F("Couldn't initialise SD card"));
+        printlnToSerial("Couldn't initialise SD card");
         //If the sd card could not be initialised beep twice and blink
         musicPlayer.sineTest(0x44, 750);
         Blink(STATUS_LED, 5, 200, 400);
