@@ -21,13 +21,12 @@ public:
 
     const char *NextRandomFilename();
 
+    void PrintFilenames(Stream &stream);
+
 private:
     int fileCount;
     String fileNames[PLAYLIST_MAX_SIZE];
     Ruzzie::SimpleRandom simpleRandom;
-
-    void PrintFilenames(Stream &stream);
-
     bool debug;
 };
 

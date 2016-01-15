@@ -70,8 +70,10 @@ void setup() {
     }
 
     Ruzzie::SimpleRandom simpleRandom = Ruzzie::SimpleRandom(analogRead(VOLUME_INPUT));
+    printlnToSerial("Randomizer created: first random: "+String(simpleRandom.Next()));
 
     defaultPlaylist.Initialize("/", simpleRandom, true);
+    defaultPlaylist.PrintFilenames(Serial);
 
     digitalWrite(STATUS_LED, HIGH);
 
@@ -80,8 +82,6 @@ void setup() {
         musicPlayer.playFullFile("INIT.MP3");
         printlnToSerial("INIT.MP3 done playing.");
     }
-
-    randomSeed(analogRead(VOLUME_INPUT));
 }
 
 void Blink(const uint8_t port, const uint8_t times, const unsigned long intervalInMs, const unsigned long durationInMs) {
@@ -129,7 +129,7 @@ void loop() {
 
     ButtonPollOrAction(BUTTON_ONE, STATUS_LED);
 
-    delay(1);
+    delay(10);
 }
 
 void ButtonPollOrAction(const uint8_t buttonPin, const uint8_t statusLedPin) {
