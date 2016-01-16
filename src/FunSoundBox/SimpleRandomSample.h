@@ -12,12 +12,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-struct RndData{
-    unsigned long CurrentSample;
-};
+
 extern unsigned long Sample(const unsigned long currentSeed);
-extern int NextRandomInt(const int exclusiveMaximum, struct RndData *data);
-extern struct RndData *InitRandom();
+
 #ifdef __cplusplus
 }
 #endif

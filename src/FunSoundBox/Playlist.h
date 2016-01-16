@@ -10,18 +10,17 @@
 
 class Playlist {
 public:
-    Playlist();
+    Playlist(void);
 
-    Playlist(const char *rootPath, const Ruzzie::SimpleRandom simpleRandom, bool debug = true);
+    Playlist(const char *rootPath, const Ruzzie::SimpleRandom simpleRandom);
 
-    void Initialize(const char *rootPath, const Ruzzie::SimpleRandom simpleRandom, bool debug = true);
+    void Initialize(const char *rootPath, const Ruzzie::SimpleRandom simpleRandom);
 
-    String NextRandomFilename();
+    String NextRandomFilename(void);
 
 private:
     int fileCount;
     Ruzzie::SimpleRandom simpleRandom;
-    bool debug;
     File root;
 };
 

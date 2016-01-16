@@ -69,12 +69,12 @@ class Adafruit_VS1053 {
   uint16_t sciRead(uint8_t addr);
   void sciWrite(uint8_t addr, uint16_t data);
   void sineTest(uint8_t n, uint16_t ms);
-  void spiwrite(uint8_t d);
-  uint8_t spiread(void);
+  void spiWrite(uint8_t d);
+  uint8_t spiRead(void);
 
 	void setVolume(uint8_t left, uint8_t right);
 
-	void playData(uint8_t *buffer, uint8_t buffsiz);
+	void playData(uint8_t *buffer, uint8_t bufferSize);
   boolean readyForData(void);
 
 	uint8_t mp3buffer[VS1053_DATABUFFERLEN];
@@ -107,9 +107,8 @@ class Adafruit_VS1053_FilePlayer : public Adafruit_VS1053 {
   void stopPlaying(void);
   boolean paused(void);
   boolean stopped(void);
-  void pausePlaying(boolean pause);
 
- private:
+private:
   uint8_t _cardCS;
 };
 

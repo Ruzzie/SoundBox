@@ -6,29 +6,21 @@
 
 namespace Ruzzie {
 
-    SimpleRandom::SimpleRandom() : SimpleRandom(1) {
+    SimpleRandom::SimpleRandom(void) : SimpleRandom(1) {
 
     }
 
-    SimpleRandom::SimpleRandom(const int seed) {
+    SimpleRandom::SimpleRandom(const long seed) {
         currentSample = Sample((unsigned long) seed);
     }
 
-    SimpleRandom::~SimpleRandom() {
-
-    }
-
-    unsigned long SimpleRandom::NextSample() {
+    unsigned long SimpleRandom::NextSample(void) {
         unsigned long retVal = currentSample;
         currentSample = Sample(currentSample);
         return retVal;
     }
 
-    int SimpleRandom::Next() {
-        return Next(RUZZIE_MAX_VALUE_INT32);
-    }
-
-    int SimpleRandom::Next(const int exclusiveMaximum) {
-        return (int) (NextSample() % (unsigned long) exclusiveMaximum);
+    unsigned long SimpleRandom::Next(const unsigned long exclusiveMaximum) {
+        return NextSample() % exclusiveMaximum;
     }
 }
