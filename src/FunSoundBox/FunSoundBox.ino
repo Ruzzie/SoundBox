@@ -4,6 +4,7 @@
 #include "Adafruit_VS1053.h"
 #include "Playlist.h"
 #include "SimpleRandom.h"
+#include "ButtonPlayResult.h"
 
 // define the pins used
 //#define CLK 13       // SPI Clock, shared with SD card
@@ -24,14 +25,17 @@
 #define BUTTON_TWO       7       // start / next raunchy playlist
 #define VOLUME_INPUT     A0
 #define VOLUME_TOLERANCE 31
+#define VOLUME_SHIFT_RIGHT_COUNT  2
 
 Adafruit_VS1053_FilePlayer musicPlayer =
         Adafruit_VS1053_FilePlayer(BREAKOUT_RESET, BREAKOUT_CS, BREAKOUT_DCS, DREQ, CARDCS);
 
 Playlist defaultPlaylist;
 
-int volumeInputValue = 1024;
+int lastVolumeInputValue = 1024;
 String nextFileToPlay;
+
+const ButtonPlayResult &DEFAULT_BUTTON_PLAY_RESULT = ButtonPlayResult();
 
 void setup() {
     pinMode(STATUS_LED, OUTPUT);
@@ -70,8 +74,8 @@ void setup() {
 
     Ruzzie::SimpleRandom simpleRandom = Ruzzie::SimpleRandom((long) analogRead(VOLUME_INPUT));
 
-    defaultPlaylist.Initialize("/", simpleRandom);
-    nextFileToPlay = defaultPlaylist.NextRandomFilename();
+    defaultPlaylist.initialize("/", simpleRandom);
+    nextFileToPlay = defaultPlaylist.nextRandomFilename();
     digitalWrite(STATUS_LED, HIGH);
 
     const char *initFileNameToPlay = "INIT.MP3";
@@ -108,17 +112,15 @@ void printlnToSerial(const __FlashStringHelper *ifsh) {
     }
 }
 
-const uint8_t volumeShiftFactor = 2;
-
 void loop() {
     /*Tweak delays to fine-tune interaction*/
     int currentVolumeInputValue = analogRead(VOLUME_INPUT);
-    if (abs(currentVolumeInputValue - volumeInputValue) > VOLUME_TOLERANCE) {
+    if (abs(currentVolumeInputValue - lastVolumeInputValue) > VOLUME_TOLERANCE) {
         digitalWrite(STATUS_LED, LOW);
-        volumeInputValue = currentVolumeInputValue;
+        lastVolumeInputValue = currentVolumeInputValue;
         uint8_t volume = 0;
-        if (volumeInputValue > 0) {
-            volume = 255 - (volumeInputValue >> volumeShiftFactor) + 1; //divide by 4 (right shift 2) in this case
+        if (lastVolumeInputValue > 0) {
+            volume = 255 - (lastVolumeInputValue >> VOLUME_SHIFT_RIGHT_COUNT) + 1; //divide by 4 (right shift 2) in this case
         }
         musicPlayer.setVolume(volume, 255);//we only use the left channel for now
         //printlnToSerial("Volume raw: " + String(volumeInputValue));
@@ -127,20 +129,29 @@ void loop() {
         delay(20);
     }
 
-    bool shouldGetNextFileButtonOne = ButtonPollOrAction(BUTTON_ONE, STATUS_LED, nextFileToPlay);
-    bool shouldGetNextFileButtonTwo = ButtonPollOrAction(BUTTON_TWO, STATUS_LED, nextFileToPlay);
+    ButtonPlayResult playResult = ButtonPollOrAction(BUTTON_ONE, STATUS_LED, nextFileToPlay);
+
+    if (!playResult.button_was_pressed) {
+        playResult = ButtonPollOrAction(BUTTON_TWO, STATUS_LED, nextFileToPlay);
+    }
+
+    if(playResult.button_was_pressed && !playResult.played_successful)
+    {
+        //error playing file
+        Blink(STATUS_LED, 2, 50, 100);
+    }
 
     //Use the idle time to get the next random file when needed
     //Todo: Check if this works, since another file maybe playing at the moment (and thus opened by the SD)
-    if (shouldGetNextFileButtonOne || shouldGetNextFileButtonTwo) {
-        nextFileToPlay = defaultPlaylist.NextRandomFilename();
-        delay(1);//Todo: tweak this
+    if (playResult.should_get_next_file) {
+        nextFileToPlay = defaultPlaylist.nextRandomFilename();
+        delay(1);//Todo: tweak this delay, is it even needed..
     } else {
         delay(5);
     }
 }
 
-bool ButtonPollOrAction(const uint8_t &buttonPin, const uint8_t &statusLedPin, const String &fileToPlay) {
+ButtonPlayResult ButtonPollOrAction(const uint8_t &buttonPin, const uint8_t &statusLedPin, const String &fileToPlay) {
     //  When button is pressed and still pressed after the delay skip to next random file
     //    when you keep the button pressed it will skip automatically
     /* Tweak delay to fine-tune interaction */
@@ -153,18 +164,22 @@ bool ButtonPollOrAction(const uint8_t &buttonPin, const uint8_t &statusLedPin, c
             if (musicPlayer.playingMusic) {
                 musicPlayer.stopPlaying();
                 //wait until stopped
-                while(!musicPlayer.stopped());
+                while (!musicPlayer.stopped());
             }
-
+            ButtonPlayResult result;
+            result.button_was_pressed = true;
             if (!musicPlayer.startPlayingFile(fileToPlay.c_str())) {
-                printlnToSerial(String(F("Error: could not play file: ")) + String(nextFileToPlay));
-                Blink(statusLedPin, 2, 50, 100);
-                return true; // also return true, since we want to get the next file if the current gives an error
+                printlnToSerial(String(F("Error: could not play file: ")) + String(fileToPlay));
+                result.should_get_next_file = true;//we want to get the next file if the current gives an error
+                result.played_successful = false;
+                return result;
             } else {
                 digitalWrite(statusLedPin, HIGH);
-                return true;
+                result.should_get_next_file = true;
+                result.played_successful = true;
+                return result;
             }
         }
     }
-    return false;
+    return DEFAULT_BUTTON_PLAY_RESULT;
 }

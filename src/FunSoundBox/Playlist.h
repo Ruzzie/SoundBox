@@ -14,14 +14,14 @@ public:
 
     Playlist(const char *rootPath, const Ruzzie::SimpleRandom simpleRandom);
 
-    void Initialize(const char *rootPath, const Ruzzie::SimpleRandom simpleRandom);
+    void initialize(const char *rootPath, const Ruzzie::SimpleRandom simpleRandom);
 
-    String NextRandomFilename(void);
+    String nextRandomFilename(void);
 
 private:
-    int fileCount;
-    Ruzzie::SimpleRandom simpleRandom;
-    File root;
+    int fileCount_ = 0;
+    Ruzzie::SimpleRandom simpleRandom_;
+    File root_;
 };
 
 

@@ -11,16 +11,16 @@ namespace Ruzzie {
     }
 
     SimpleRandom::SimpleRandom(const long seed) {
-        currentSample = Sample((unsigned long) seed);
+        currentSample_ = sample((unsigned long) seed);
     }
 
-    unsigned long SimpleRandom::NextSample(void) {
-        unsigned long retVal = currentSample;
-        currentSample = Sample(currentSample);
+    unsigned long SimpleRandom::nextSample(void) {
+        unsigned long retVal = currentSample_;
+        currentSample_ = sample(currentSample_);
         return retVal;
     }
 
-    unsigned long SimpleRandom::Next(const unsigned long exclusiveMaximum) {
-        return NextSample() % exclusiveMaximum;
+    unsigned long SimpleRandom::next(const unsigned long exclusiveMaximum) {
+        return nextSample() % exclusiveMaximum;
     }
 }

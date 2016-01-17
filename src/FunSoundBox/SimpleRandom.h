@@ -13,12 +13,12 @@ namespace Ruzzie {
 
         SimpleRandom(const long seed);
 
-        unsigned long Next(const unsigned long exclusiveMaximum);
+        unsigned long next(const unsigned long exclusiveMaximum);
 
     private:
-        volatile unsigned long currentSample;
+        volatile unsigned long currentSample_;
 
-        unsigned long NextSample(void);
+        unsigned long nextSample(void);
     };
 }
 #endif //RANDOM_SIMPLE_RANDOM_H

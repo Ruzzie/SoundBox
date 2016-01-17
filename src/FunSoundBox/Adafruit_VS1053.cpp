@@ -13,7 +13,6 @@
  ****************************************************/
 
 #include "Adafruit_VS1053.h"
-#include <SD.h>
 
 static Adafruit_VS1053_FilePlayer *myself;
 
@@ -121,8 +120,8 @@ boolean Adafruit_VS1053_FilePlayer::useInterrupt(uint8_t type) {
 }
 
 Adafruit_VS1053_FilePlayer::Adafruit_VS1053_FilePlayer(
-        int8_t rst, int8_t cs, int8_t dcs, int8_t dreq,
-        int8_t cardcs)
+        uint8_t rst, uint8_t cs, uint8_t dcs, uint8_t dreq,
+        uint8_t cardcs)
         : Adafruit_VS1053(rst, cs, dcs, dreq) {
 
     playingMusic = false;
@@ -133,8 +132,8 @@ Adafruit_VS1053_FilePlayer::Adafruit_VS1053_FilePlayer(
 }
 
 Adafruit_VS1053_FilePlayer::Adafruit_VS1053_FilePlayer(
-        int8_t cs, int8_t dcs, int8_t dreq,
-        int8_t cardcs)
+        uint8_t cs, uint8_t dcs, uint8_t dreq,
+        uint8_t cardcs)
         : Adafruit_VS1053(-1, cs, dcs, dreq) {
 
     playingMusic = false;
@@ -145,9 +144,9 @@ Adafruit_VS1053_FilePlayer::Adafruit_VS1053_FilePlayer(
 }
 
 Adafruit_VS1053_FilePlayer::Adafruit_VS1053_FilePlayer(
-        int8_t mosi, int8_t miso, int8_t clk,
-        int8_t rst, int8_t cs, int8_t dcs, int8_t dreq,
-        int8_t cardcs)
+        uint8_t mosi, uint8_t miso, uint8_t clk,
+        uint8_t rst, uint8_t cs, uint8_t dcs, uint8_t dreq,
+        uint8_t cardcs)
         : Adafruit_VS1053(mosi, miso, clk, rst, cs, dcs, dreq) {
 
     playingMusic = false;
@@ -183,10 +182,6 @@ void Adafruit_VS1053_FilePlayer::stopPlaying(void) {
     // wrap it up!
     playingMusic = false;
     currentTrack.close();
-}
-
-boolean Adafruit_VS1053_FilePlayer::paused(void) {
-    return (!playingMusic && currentTrack);
 }
 
 boolean Adafruit_VS1053_FilePlayer::stopped(void) {
@@ -264,16 +259,16 @@ void Adafruit_VS1053_FilePlayer::feedBuffer(void) {
         //UDR0 = '.';
 
         // Read some audio data from the SD card file
-        int bytesread = currentTrack.read(mp3buffer, VS1053_DATABUFFERLEN);
+        uint8_t bytesRead = (uint8_t) currentTrack.read(mp3buffer, VS1053_DATABUFFERLEN);
 
-        if (bytesread == 0) {
+        if (bytesRead == 0) {
             // must be at the end of the file, wrap it up!
             playingMusic = false;
             currentTrack.close();
             running = 0;
             return;
         }
-        playData(mp3buffer, bytesread);
+        playData(mp3buffer, bytesRead);
     }
     running = 0;
     return;
@@ -286,8 +281,8 @@ void Adafruit_VS1053_FilePlayer::feedBuffer(void) {
 static volatile PortReg *clkportreg, *misoportreg, *mosiportreg;
 static PortMask clkpin, misopin, mosipin;
 
-Adafruit_VS1053::Adafruit_VS1053(int8_t mosi, int8_t miso, int8_t clk,
-                                 int8_t rst, int8_t cs, int8_t dcs, int8_t dreq) {
+Adafruit_VS1053::Adafruit_VS1053(uint8_t mosi, uint8_t miso, uint8_t clk,
+                                 uint8_t rst, uint8_t cs, uint8_t dcs, uint8_t dreq) {
     _mosi = mosi;
     _miso = miso;
     _clk = clk;
@@ -306,7 +301,7 @@ Adafruit_VS1053::Adafruit_VS1053(int8_t mosi, int8_t miso, int8_t clk,
     mosipin = digitalPinToBitMask(_mosi);
 }
 
-Adafruit_VS1053::Adafruit_VS1053(int8_t rst, int8_t cs, int8_t dcs, int8_t dreq) {
+Adafruit_VS1053::Adafruit_VS1053(uint8_t rst, uint8_t cs, uint8_t dcs, uint8_t dreq) {
     _mosi = 0;
     _miso = 0;
     _clk = 0;
@@ -345,7 +340,6 @@ void Adafruit_VS1053::setVolume(uint8_t left, uint8_t right) {
     sciWrite(VS1053_REG_VOLUME, v);
     interrupts();  //sei();
 }
-
 
 void Adafruit_VS1053::softReset(void) {
     sciWrite(VS1053_REG_MODE, VS1053_MODE_SM_SDINEW | VS1053_MODE_SM_RESET);
@@ -399,7 +393,6 @@ uint8_t Adafruit_VS1053::begin(void) {
     return (sciRead(VS1053_REG_STATUS) >> 4) & 0x0F;
 }
 
-
 uint16_t Adafruit_VS1053::sciRead(uint8_t addr) {
     uint16_t data;
 
@@ -421,7 +414,6 @@ uint16_t Adafruit_VS1053::sciRead(uint8_t addr) {
     return data;
 }
 
-
 void Adafruit_VS1053::sciWrite(uint8_t addr, uint16_t data) {
 #ifdef SPI_HAS_TRANSACTION
     if (useHardwareSPI) SPI.beginTransaction(VS1053_CONTROL_SPI_SETTING);
@@ -437,9 +429,8 @@ void Adafruit_VS1053::sciWrite(uint8_t addr, uint16_t data) {
 #endif
 }
 
-
 uint8_t Adafruit_VS1053::spiRead(void) {
-    int8_t i, x;
+    uint8_t i, x;
     x = 0;
 
     // MSB first, clock low when inactive (CPOL 0), data valid on leading edge (CPHA 0)
@@ -481,7 +472,6 @@ void Adafruit_VS1053::spiWrite(uint8_t c) {
         *clkportreg &= ~clkpin;   // Make sure clock ends low
     }
 }
-
 
 void Adafruit_VS1053::sineTest(uint8_t n, uint16_t ms) {
     reset();

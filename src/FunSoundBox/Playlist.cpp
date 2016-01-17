@@ -5,15 +5,15 @@
 #include "Playlist.h"
 
 Playlist::Playlist(const char *rootPath, const Ruzzie::SimpleRandom simpleRandom) {
-    Initialize(rootPath, simpleRandom);
+    initialize(rootPath, simpleRandom);
 }
 
-String Playlist::NextRandomFilename(void) {
-    root.rewindDirectory();
-    int random = simpleRandom.Next(fileCount);
+String Playlist::nextRandomFilename(void) {
+    root_.rewindDirectory();
+    int random = (int) simpleRandom_.next((const unsigned long) fileCount_);
     String fileName;
 
-    if (!root) {
+    if (!root_) {
         if(Serial) {
             Serial.println(F("Could not open root"));
         }
@@ -21,17 +21,16 @@ String Playlist::NextRandomFilename(void) {
     }
 
     int i = 0;
-    while(i < fileCount){
-        File entry = root.openNextFile();
-        if (!entry) {
+    while(i < fileCount_){
+        File entry = root_.openNextFile();
 #if defined(DEBUG)
+        if (!entry) {
             if(Serial){
                 Serial.println(F("No more files found."));
             }
-#endif
             break;
         }
-
+#endif
         //only get the file names in the current directory, not in the subdirectory
         if (!entry.isDirectory()) {
             if (i == random) {
@@ -39,7 +38,7 @@ String Playlist::NextRandomFilename(void) {
                 fileName.toUpperCase();
                 //Serial.println("Random: " + String(random) + " filename: " + fileName);
                 entry.close();
-                break;
+                return fileName;
             }
             ++i;
         }
@@ -49,25 +48,22 @@ String Playlist::NextRandomFilename(void) {
 }
 
 Playlist::Playlist(void) {
-  fileCount = 0;
 }
 
-void Playlist::Initialize(const char *rootPath, const Ruzzie::SimpleRandom simpleRandom) {
-    fileCount = 0;
+void Playlist::initialize(const char *rootPath, const Ruzzie::SimpleRandom simpleRandom) {
+    fileCount_ = 0;
 
-    this->simpleRandom = simpleRandom;
+    this->simpleRandom_ = simpleRandom;
 
-    this->root = SD.open(rootPath);
+    this->root_ = SD.open(rootPath);
 
-#if defined(DEBUG)
-    if (debug) {
-        if(Serial){
-            Serial.println("New playlist created. Start listing files: ");
-        }
-    }
+#if defined(DEBUG)  
+    if(Serial){
+        Serial.println("New playlist created. Start listing files: ");
+    }    
 #endif
 
-    if (!root) {
+    if (!root_) {
 #if defined(DEBUG)
         if(Serial){
             Serial.println("Could not open root: " + String(rootPath));
@@ -77,7 +73,7 @@ void Playlist::Initialize(const char *rootPath, const Ruzzie::SimpleRandom simpl
     }
 
     while (true) {
-        File entry = root.openNextFile();
+        File entry = root_.openNextFile();
         if (!entry) {
 #if defined(DEBUG)
             if(Serial){
@@ -95,7 +91,7 @@ void Playlist::Initialize(const char *rootPath, const Ruzzie::SimpleRandom simpl
                 Serial.println("File: " + fileName);
             }
 #endif
-            ++fileCount;
+            ++fileCount_;
         } else {
 #if defined(DEBUG)
             if(Serial){
@@ -105,10 +101,10 @@ void Playlist::Initialize(const char *rootPath, const Ruzzie::SimpleRandom simpl
         }
         entry.close();
     }
-    root.rewindDirectory();
+    root_.rewindDirectory();
 #if defined(DEBUG)
     if(Serial){
-        Serial.println("Playlist initialized with: " + String(fileCount) + " files.");
+        Serial.println("Playlist initialized with: " + String(fileCount_) + " files.");
     }
 #endif
 }

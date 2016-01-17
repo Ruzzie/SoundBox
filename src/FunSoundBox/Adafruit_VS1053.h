@@ -15,16 +15,19 @@
 #define ADAFRUIT_VS1053_H
 
 #if (ARDUINO >= 100)
- #include <Arduino.h>
+
+#include <Arduino.h>
+
 #else
- #include <WProgram.h>
- #include <pins_arduino.h>
+#include <WProgram.h>
+#include <pins_arduino.h>
 #endif
 
 #include "pins_arduino.h"
 #include "wiring_private.h"
-#include <SPI.h> 
+#include <SPI.h>
 #include <SD.h>
+
 
 #ifdef __SAM3X8E__
 typedef volatile RwReg PortReg;
@@ -59,57 +62,75 @@ typedef uint8_t PortMask;
 
 
 class Adafruit_VS1053 {
- public:
-  Adafruit_VS1053(int8_t mosi, int8_t miso, int8_t clk, 
-		  int8_t rst, int8_t cs, int8_t dcs, int8_t dreq);
-  Adafruit_VS1053(int8_t rst, int8_t cs, int8_t dcs, int8_t dreq);
-  uint8_t begin(void);
-  void reset(void);
-  void softReset(void);
-  uint16_t sciRead(uint8_t addr);
-  void sciWrite(uint8_t addr, uint16_t data);
-  void sineTest(uint8_t n, uint16_t ms);
-  void spiWrite(uint8_t d);
-  uint8_t spiRead(void);
+public:
+    Adafruit_VS1053(uint8_t mosi, uint8_t miso, uint8_t clk,
+                    uint8_t rst, uint8_t cs, uint8_t dcs, uint8_t dreq);
 
-	void setVolume(uint8_t left, uint8_t right);
+    Adafruit_VS1053(uint8_t rst, uint8_t cs, uint8_t dcs, uint8_t dreq);
 
-	void playData(uint8_t *buffer, uint8_t bufferSize);
-  boolean readyForData(void);
+    uint8_t begin(void);
 
-	uint8_t mp3buffer[VS1053_DATABUFFERLEN];
+    void reset(void);
 
- protected:
-  uint8_t  _dreq;
- private:
-  int8_t _mosi, _miso, _clk, _reset, _cs, _dcs;
-  boolean useHardwareSPI;
+    void softReset(void);
+
+    uint16_t sciRead(uint8_t addr);
+
+    void sciWrite(uint8_t addr, uint16_t data);
+
+    void sineTest(uint8_t n, uint16_t ms);
+
+    void spiWrite(uint8_t d);
+
+    uint8_t spiRead(void);
+
+    void setVolume(uint8_t left, uint8_t right);
+
+    void playData(uint8_t *buffer, uint8_t bufferSize);
+
+    boolean readyForData(void);
+
+    uint8_t mp3buffer[VS1053_DATABUFFERLEN];
+
+protected:
+    uint8_t _dreq;
+private:
+    uint8_t _mosi, _miso, _clk, _reset, _cs, _dcs;
+    boolean useHardwareSPI;
 };
 
 
 class Adafruit_VS1053_FilePlayer : public Adafruit_VS1053 {
- public:
-  Adafruit_VS1053_FilePlayer (int8_t mosi, int8_t miso, int8_t clk, 
-			      int8_t rst, int8_t cs, int8_t dcs, int8_t dreq,
-			      int8_t cardCS);
-  Adafruit_VS1053_FilePlayer (int8_t rst, int8_t cs, int8_t dcs, int8_t dreq,
-			      int8_t cardCS);
-  Adafruit_VS1053_FilePlayer (int8_t cs, int8_t dcs, int8_t dreq,
-			      int8_t cardCS);
+public:
+    Adafruit_VS1053_FilePlayer(uint8_t mosi, uint8_t miso, uint8_t clk,
+                               uint8_t rst, uint8_t cs, uint8_t dcs, uint8_t dreq,
+                               uint8_t cardCS);
 
-  boolean begin(void);
-  boolean useInterrupt(uint8_t type);
-  File currentTrack;
-  volatile boolean playingMusic;
-  void feedBuffer(void);
-  boolean startPlayingFile(const char *trackname);
-  boolean playFullFile(const char *trackname);
-  void stopPlaying(void);
-  boolean paused(void);
-  boolean stopped(void);
+    Adafruit_VS1053_FilePlayer(uint8_t rst, uint8_t cs, uint8_t dcs, uint8_t dreq,
+                               uint8_t cardCS);
+
+    Adafruit_VS1053_FilePlayer(uint8_t cs, uint8_t dcs, uint8_t dreq,
+                               uint8_t cardCS);
+
+    boolean begin(void);
+
+    boolean useInterrupt(uint8_t type);
+
+    File currentTrack;
+    volatile boolean playingMusic;
+
+    void feedBuffer(void);
+
+    boolean startPlayingFile(const char *trackname);
+
+    boolean playFullFile(const char *trackname);
+
+    void stopPlaying(void);
+
+    boolean stopped(void);
 
 private:
-  uint8_t _cardCS;
+    uint8_t _cardCS;
 };
 
 #endif // ADAFRUIT_VS1053_H

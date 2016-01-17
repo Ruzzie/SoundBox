@@ -4,8 +4,6 @@
 
 #include "SimpleRandomSample.h"
 
-unsigned long Sample(const unsigned long currentSeed) {
-    return ((currentSeed * RUZZIE_RANDOM_PONE_POW_THREE) - (RUZZIE_RANDOM_PTWO_POW_TWO)) % RUZZIE_RANDOM_MODULO_VALUE;
+unsigned long sample(const unsigned long currentSeed) {
+    return (unsigned long) (((currentSeed * RUZZIE_RANDOM_PONE_POW_THREE) - (RUZZIE_RANDOM_PTWO_POW_TWO)) % RUZZIE_RANDOM_MODULO_VALUE);
 }
-
-

@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-extern unsigned long Sample(const unsigned long currentSeed);
+extern unsigned long sample(const unsigned long currentSeed);
 
 #ifdef __cplusplus
 }
